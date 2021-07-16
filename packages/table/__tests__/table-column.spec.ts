@@ -1,4 +1,4 @@
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import ElTable from '../src/table.vue'
 import ElTableColumn from '../src/table-column/index'
 import { triggerEvent } from '@element-plus/test-utils'
@@ -667,7 +667,7 @@ describe('table column', () => {
     })
 
     it('el-table-column should callback itself', async() => {
-      const TableColumn = defineComponent({
+      const TableColumn = {
         name: 'TableColumn',
         components: {
           ElTableColumn,
@@ -682,7 +682,7 @@ describe('table column', () => {
             </template>
           </el-table-column>
         `,
-      })
+      }
       const App = {
         template: `
           <el-table :data="data">
@@ -741,11 +741,11 @@ describe('table column', () => {
     })
 
     it('should not rendered other components in hidden-columns', async () => {
-      const Comp = defineComponent({
+      const Comp = {
         template: `
           <div class="other-component"></div>
         `,
-      })
+      }
       const wrapper = mount({
         components: {
           ElTableColumn,
@@ -926,10 +926,17 @@ describe('table column', () => {
       expect(wrapper.find('.el-table__body col').attributes('width')).toEqual(
         '100',
       )
+
       wrapper.vm.width = 200
       await nextTick()
       expect(wrapper.find('.el-table__body col').attributes('width')).toEqual(
         '200',
+      )
+
+      wrapper.vm.width = '300px'
+      await nextTick()
+      expect(wrapper.find('.el-table__body col').attributes('width')).toEqual(
+        '300',
       )
       wrapper.unmount()
     })
@@ -961,10 +968,17 @@ describe('table column', () => {
       expect(wrapper.find('.el-table__body col').attributes('width')).toEqual(
         '100',
       )
+
       wrapper.vm.width = 200
       await nextTick()
       expect(wrapper.find('.el-table__body col').attributes('width')).toEqual(
         '200',
+      )
+
+      wrapper.vm.width = '300px'
+      await nextTick()
+      expect(wrapper.find('.el-table__body col').attributes('width')).toEqual(
+        '300',
       )
       wrapper.unmount()
     })
@@ -1046,5 +1060,142 @@ describe('table column', () => {
       expect(firstColumnContent).toEqual(secondColumnContent)
       wrapper.unmount()
     })
+  })
+
+  describe('tree table', () => {
+
+    const getTableData = () => {
+      return [{
+        id: 1,
+        date: '2016-05-02',
+        name: 'Wangxiaohu',
+        address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+        index: 1,
+      }, {
+        id: 2,
+        date: '2016-05-04',
+        name: 'Wangxiaohu',
+        address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+        index: 2,
+      }, {
+        id: 3,
+        date: '2016-05-01',
+        name: 'Wangxiaohu',
+        address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+        index: 3,
+        children: [{
+          id: 31,
+          date: '2016-05-01',
+          name: 'Wangxiaohu',
+          address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+          index: 4,
+          children: [
+            {
+              id: 311,
+              date: '2016-05-01',
+              name: 'Wangxiaohu',
+              address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+              index: 5,
+            },
+            {
+              id: 312,
+              date: '2016-05-01',
+              name: 'Wangxiaohu',
+              address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+              index: 6,
+            },
+            {
+              id: 313,
+              date: '2016-05-01',
+              name: 'Wangxiaohu',
+              address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+              index: 7,
+              disabled: true,
+            },
+          ],
+        }, {
+          id: 32,
+          date: '2016-05-01',
+          name: 'Wangxiaohu',
+          address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+          index: 8,
+        }],
+      }, {
+        id: 4,
+        date: '2016-05-03',
+        name: 'Wangxiaohu',
+        address: '1518 Jinshajiang Road, Putuo District, Shanghai',
+        index: 9,
+      }]
+    }
+
+    const createTable = function(methods) {
+      return mount(
+        Object.assign(
+          {
+            components: {
+              ElTable,
+              ElTableColumn,
+            },
+            template: `
+              <el-table
+                ref="table"
+                :data="testData"
+                row-key="id"
+                border
+                default-expand-all
+                :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
+              >
+                <el-table-column type="index"></el-table-column>
+                <el-table-column type="selection" :selectable="selectable"></el-table-column>
+                <el-table-column prop="id" label="id"></el-table-column>
+                <el-table-column
+                  prop="date"
+                  label="Date"
+                  sortable
+                  width="180">
+                </el-table-column>
+                <el-table-column
+                  prop="name"
+                  label="Name"
+                  sortable
+                  width="180">
+                </el-table-column>
+                <el-table-column
+                  prop="address"
+                  label="Address">
+                </el-table-column>
+              </el-table>
+          `,
+            methods: {
+              selectable(row) {
+                return !row.disabled
+              },
+              ...methods,
+            },
+            data() {
+              return {
+                testData: getTableData(),
+              }
+            },
+          },
+        ),
+      )
+    }
+
+    it('selectable index parameter should be correct', async() => {
+      const result = []
+      const wrapper = createTable({
+        selectable(row, index) {
+          result.push((row.index - 1) === index)
+          return !row.disabled
+        },
+      })
+      await nextTick()
+      wrapper.vm.$refs.table.toggleAllSelection()
+      expect(result.every(item => item)).toBeTruthy()
+      wrapper.unmount()
+    })
+
   })
 })
