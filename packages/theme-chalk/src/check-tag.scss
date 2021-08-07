@@ -5,14 +5,14 @@
 
 @include b(check-tag) {
   background-color: $--background-color-base;
-  border-radius: $--border-radius-base;
-  color: $--color-info;
+  border-radius: var(--el-border-radius-base);
+  color: var(--el-color-info);
   cursor: pointer;
   display: inline-block;
   font-size: var(--el-font-size-base);
   line-height: var(--el-font-size-base);
   padding: 7px 15px;
-  transition: $--all-transition;
+  transition: var(--el-all-transition);
   font-weight: bold;
   &:hover {
     background-color: rgb(220, 223, 230);

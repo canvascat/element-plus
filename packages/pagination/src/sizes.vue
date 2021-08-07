@@ -21,9 +21,11 @@
 import { defineComponent, watch, computed, ref } from 'vue'
 import ElSelect from '@element-plus/select'
 import ElOption from '@element-plus/option'
-import { t } from '@element-plus/locale'
+import { useLocaleInject } from '@element-plus/hooks'
 import isEqual from 'lodash/isEqual'
 import { usePagination } from './usePagination'
+
+export type Nullable<T> = null | T
 
 export default defineComponent({
   name: 'Sizes',
@@ -47,6 +49,7 @@ export default defineComponent({
   },
   emits: ['page-size-change'],
   setup(props, { emit }) {
+    const { t } = useLocaleInject()
     const { pagination } = usePagination()
     const innerPageSize = ref<Nullable<number>>(props.pageSize)
 
