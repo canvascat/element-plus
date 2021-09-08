@@ -43,12 +43,11 @@ import type {
   Instance as PopperInstance,
   StrictModifiers,
 } from '@popperjs/core'
-import type { RefElement } from '@element-plus/utils/types'
+import type { RefElement, Nullable } from '@element-plus/utils/types'
 import type { Trigger } from './use-target-events'
 
-export type Effect = 'light' | 'dark'
+export type PopperEffect = 'light' | 'dark'
 export type Offset = [number, number] | number
-export type Nullable<T> = null | T
 
 type ElementType = ComponentPublicInstance | HTMLElement
 
@@ -93,7 +92,7 @@ export const usePopperProps = {
     default: false,
   },
   effect: {
-    type: String as PropType<Effect>,
+    type: String as PropType<PopperEffect>,
     default: DARK_EFFECT,
   },
   enterable: {
@@ -134,10 +133,9 @@ export const usePopperProps = {
   },
 }
 
-export const usePopper = () => {
-
+export const usePopperHook = () => {
   const vm = getCurrentInstance()
-  const props = vm.props as ExtractPropTypes<typeof usePopperProps>
+  const props: ExtractPropTypes<typeof usePopperProps> = vm.props as any
   const { slots } = vm
 
   const arrowRef = ref<RefElement>(null)
@@ -146,16 +144,17 @@ export const usePopper = () => {
 
   const popperStyle = ref<CSSProperties>({ zIndex: PopupManager.nextZIndex() })
   const visible = ref(false)
-  const isManual = computed(() => props.manualMode || props.trigger === 'manual')
+  const isManual = computed(
+    () => props.manualMode || props.trigger === 'manual'
+  )
 
   const popperId = `el-popper-${generateId()}`
   let popperInstance: Nullable<PopperInstance> = null
 
-  const {
-    renderTeleport,
-    showTeleport,
-    hideTeleport,
-  } = useTeleport(popupRenderer, toRef(props, 'appendToBody'))
+  const { renderTeleport, showTeleport, hideTeleport } = useTeleport(
+    popupRenderer,
+    toRef(props, 'appendToBody')
+  )
 
   const { show, hide } = useModelToggle({
     indicator: visible,
@@ -247,10 +246,7 @@ export const usePopper = () => {
   }
 
   function buildPopperOptions() {
-    const modifiers = [
-      ...defaultModifiers,
-      ...props.popperOptions.modifiers,
-    ]
+    const modifiers = [...defaultModifiers, ...props.popperOptions.modifiers]
 
     if (props.showArrow) {
       modifiers.push({
@@ -268,12 +264,8 @@ export const usePopper = () => {
     }
   }
 
-  const {
-    onAfterEnter,
-    onAfterLeave,
-    onBeforeEnter,
-    onBeforeLeave,
-  } = useTransitionFallthrough()
+  const { onAfterEnter, onAfterLeave, onBeforeEnter, onBeforeLeave } =
+    useTransitionFallthrough()
 
   const events = useTargetEvents(delayShow, delayHide, onToggle)
 
@@ -285,7 +277,7 @@ export const usePopper = () => {
   function popupRenderer() {
     const mouseUpAndDown = props.stopPopperMouseEvent ? stop : NOOP
     return h(
-      Transition,
+      Transition as any,
       {
         name: props.transition,
         onAfterEnter,
@@ -294,57 +286,63 @@ export const usePopper = () => {
         onBeforeLeave,
       },
       {
-        default: () => () => visible.value ? h('div',
-          {
-            'aria-hidden': false,
-            class: [
-              props.popperClass,
-              'el-popper',
-              `is-${props.effect}`,
-              props.pure ? 'is-pure' : '',
-            ],
-            style: popperStyle.value,
-            id: popperId,
-            ref: popperRefAttacher,
-            role: 'tooltip',
-            onMouseenter: onPopperMouseEnter,
-            onMouseleave: onPopperMouseLeave,
-            onClick: stop,
-            onMousedown: mouseUpAndDown,
-            onMouseup: mouseUpAndDown,
-          },
-          [
-            renderSlot(slots, 'default', {}, () => [toDisplayString(props.content)]),
-            arrowRenderer(),
-          ],
-        ) : null,
-      },
+        default: () => () =>
+          visible.value
+            ? h(
+                'div',
+                {
+                  'aria-hidden': false,
+                  class: [
+                    props.popperClass,
+                    'el-popper',
+                    `is-${props.effect}`,
+                    props.pure ? 'is-pure' : '',
+                  ],
+                  style: popperStyle.value,
+                  id: popperId,
+                  ref: popperRefAttacher,
+                  role: 'tooltip',
+                  onMouseenter: onPopperMouseEnter,
+                  onMouseleave: onPopperMouseLeave,
+                  onClick: stop,
+                  onMousedown: mouseUpAndDown,
+                  onMouseup: mouseUpAndDown,
+                },
+                [
+                  renderSlot(slots, 'default', {}, () => [
+                    toDisplayString(props.content),
+                  ]),
+                  arrowRenderer(),
+                ]
+              )
+            : null,
+      }
     )
   }
 
   function arrowRenderer() {
     return props.showArrow
       ? h(
-        'div',
-        {
-          ref: arrowRefAttacher,
-          class: 'el-popper__arrow',
-          'data-popper-arrow': '',
-        },
-        null,
-      )
+          'div',
+          {
+            ref: arrowRefAttacher,
+            class: 'el-popper__arrow',
+            'data-popper-arrow': '',
+          },
+          null
+        )
       : null
   }
 
   function triggerRenderer(triggerProps) {
     const trigger = slots.trigger?.()
     const firstElement = getFirstValidNode(trigger, 1)
-    if (!firstElement) throwError('renderTrigger', 'trigger expects single rooted node')
+    if (!firstElement)
+      throwError('renderTrigger', 'trigger expects single rooted node')
     return cloneVNode(firstElement, triggerProps, true)
   }
 
   function render() {
-
     const trigger = triggerRenderer({
       'aria-describedby': popperId,
       class: props.class,
@@ -364,5 +362,3 @@ export const usePopper = () => {
     render,
   }
 }
-
-

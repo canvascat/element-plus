@@ -10,6 +10,10 @@ import MainFooter from './components/footer'
 import MainHeader from './components/header'
 import SideNav from './components/side-nav'
 import FooterNav from './components/footer-nav'
+import AppHeading from './components/heading'
+import AppLink from './components/link'
+import AppImg from './components/img'
+
 import title from './i18n/title'
 import 'highlight.js/styles/color-brewer.css'
 import './demo-styles/index.scss'
@@ -36,13 +40,15 @@ for (let i in ElementPlusSvgIcons) {
 app.config.globalProperties.$svgIcons = svgIcons
 app.config.globalProperties.$icon = icon
 
-
 app.component('DemoBlock', demoBlock)
 app.component('RightNav', RightNav)
 app.component('MainFooter', MainFooter)
 app.component('MainHeader', MainHeader)
 app.component('SideNav', SideNav)
 app.component('FooterNav', FooterNav)
+app.component('AppHeading', AppHeading)
+app.component('AppLink', AppLink)
+app.component('AppImg', AppImg)
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -52,29 +58,33 @@ app.use(ElementPlus)
 app.use(router)
 router.isReady().then(() => {
   let lang = location.hash.split('/')[1]
-  let langConfig = compLang.filter(config => config.lang === lang)[0]['demo-block']
+  let langConfig = compLang.filter((config) => config.lang === lang)[0][
+    'demo-block'
+  ]
 
-  app.config.globalProperties.$copySvgIcon = iconName => {
+  app.config.globalProperties.$copySvgIcon = (iconName) => {
     clipboardCopy(
-      `<el-svg-icon>
+      `<el-icon>
   <${hyphenate(iconName)} />
-</el-svg-icon>
-      `,
-    ).then(() => {
-      app.config.globalProperties.$message({
-        showClose: true,
-        message: langConfig['copy-success'],
-        type: 'success',
+</el-icon>
+      `
+    )
+      .then(() => {
+        app.config.globalProperties.$message({
+          showClose: true,
+          message: langConfig['copy-success'],
+          type: 'success',
+        })
       })
-    }).catch(() => {
-      app.config.globalProperties.$message({
-        showClose: true,
-        message: langConfig['copy-error'],
-        type: 'error',
+      .catch(() => {
+        app.config.globalProperties.$message({
+          showClose: true,
+          message: langConfig['copy-error'],
+          type: 'error',
+        })
       })
-    })
   }
-  router.afterEach(async route => {
+  router.afterEach(async (route) => {
     await nextTick()
     lang = location.hash.split('/')[1]
     const data = title[route.meta.lang]
@@ -87,7 +97,6 @@ router.isReady().then(() => {
     document.title = 'Element'
     ga('send', 'event', 'PageView', route.name)
   })
-
 })
 
 app.mount('#app')
